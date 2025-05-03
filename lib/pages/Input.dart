@@ -52,7 +52,6 @@ class _InputPageState extends State<InputPage> {
             const SizedBox(height: 30),
             ElevatedButton(
     onPressed: () async {
-      // Collect user inputs
       // double micSpacing = double.parse(micSpacingController.text);
       // double distanceSample = double.parse(distanceSampleController.text);
       // double tubeDiameter = double.parse(tubeDiameterController.text);
