@@ -40,6 +40,8 @@ analysis_benchmark.json
 .packages
 .pub-preload-cache/
 .pub/
+.idea/
+.metadata
 build/
 flutter_*.png
 linked_*.ds
@@ -56,6 +58,8 @@ unlinked_spec.ds
 **/android/**/GeneratedPluginRegistrant.java
 **/android/key.properties
 *.jks
+**/android/build.gradle.kts
+**/android/settings.gradle.kts
 
 # iOS/XCode related
 **/ios/**/*.mode1v3
