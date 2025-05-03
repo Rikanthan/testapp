@@ -45,7 +45,7 @@ class _AmplitudeFrequencyGraphState extends State<AmplitudeFrequencyGraph> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Amplitude vs Frequency")),
+      appBar: AppBar(title: const Text("Absorption vs Frequency")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: LineChart(
