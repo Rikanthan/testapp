@@ -1,57 +1,182 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+import 'package:testapp/pages/GraphAbsorption.dart';
+import 'package:testapp/pages/db_help.dart';
 
-class AbsorptionTableScreen extends StatelessWidget {
-  // Generate the data
-  final List<double> frequencyList = List.generate(100, (index) {
-    return 100 + (index * (5000 - 100) / 99);
+class AbsorptionTableScreen extends StatefulWidget {
+  final String material;
+  final double frequency;
+  final double p1;
+  final double p2;
+
+  const AbsorptionTableScreen({
+    super.key,
+    required this.material,
+    required this.frequency,
+    required this.p1,
+    required this.p2,
   });
 
-  final List<double> incidentPressureList = [];
-  final List<double> reflectedPressureList = [];
-  final List<double> absorptionCoefficientList = [];
+  @override
+  State<AbsorptionTableScreen> createState() => _AbsorptionTableScreenState();
+}
 
-  AbsorptionTableScreen({super.key}) {
-    for (var freq in frequencyList) {
-      double incident = 1.0 + 0.2 * sin(2 * pi * freq / 3000);
-      double reflected = 0.5 + 0.1 * cos(2 * pi * freq / 2500);
+class _AbsorptionTableScreenState extends State<AbsorptionTableScreen> {
+  late double absorption;
+  List<Map<String, dynamic>> _allMeasurements = [];
 
-      double reflectionCoefficient = reflected / incident;
-      double absorption = 1 - (reflectionCoefficient * reflectionCoefficient);
-      absorption = absorption.clamp(0.0, 1.0);
+  @override
+  void initState() {
+    super.initState();
+    _calculateAndSave();
+  }
 
-      incidentPressureList.add(incident);
-      reflectedPressureList.add(reflected);
-      absorptionCoefficientList.add(absorption);
-    }
+  Future<void> _calculateAndSave() async {
+    double reflectionCoefficient = widget.p2 / widget.p1;
+    double calculatedAbsorption =
+        1 - (reflectionCoefficient * reflectionCoefficient);
+    calculatedAbsorption = calculatedAbsorption.clamp(0.0, 1.0);
+    absorption = calculatedAbsorption;
+
+    await DBHelper.instance.insertMeasurement({
+      'material': widget.material,
+      'frequency': widget.frequency,
+      'p1': widget.p1,
+      'p2': widget.p2,
+      'absorption': absorption,
+      'createdAt': DateTime.now().toIso8601String(),
+    });
+
+    await _loadMeasurements();
+  }
+
+  Future<void> _loadMeasurements() async {
+    final data = await DBHelper.instance.getAllMeasurements();
+    setState(() {
+      _allMeasurements = data;
+    });
+  }
+
+  Future<void> _clearAll() async {
+    await DBHelper.instance.clearAll();
+    setState(() {
+      _allMeasurements = [];
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Absorption Data Table")),
-      body: SingleChildScrollView(
-        scrollDirection: Axis.vertical, // allow horizontal scroll
-        child: DataTable(
-            columnSpacing: 10, // 👈 Reduce space between columns (default is 56)
-            dataRowMinHeight: 30, // 👈 Optional: reduce row height
-            dataRowMaxHeight: 40,
-          columns: const [
-            DataColumn(label: Text('Frequency\n(Hz)')),
-            DataColumn(label: Text("Incident\n Pressure (Pa)")),
-            DataColumn(label: Text('Reflected\nPressure (Pa)')),
-            DataColumn(label: Text('Absorption\nCoefficient')),
-          ],
-          rows: List<DataRow>.generate(
-            frequencyList.length,
-            (index) => DataRow(
-              cells: [
-                DataCell(Text(frequencyList[index].toStringAsFixed(1))),
-                DataCell(Text(incidentPressureList[index].toStringAsFixed(3))),
-                DataCell(Text(reflectedPressureList[index].toStringAsFixed(3))),
-                DataCell(Text(absorptionCoefficientList[index].toStringAsFixed(3))),
-              ],
-            ),
+      appBar: AppBar(
+        title: const Text("Absorption Calculation"),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Text(
+                'Calculated Absorption Data',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              DataTable(
+                columnSpacing: 20,
+                columns: const [
+                  DataColumn(label: Text('Material')),
+                  DataColumn(label: Text('Frequency (Hz)')),
+                  DataColumn(label: Text('P1')),
+                  DataColumn(label: Text('P2')),
+                  DataColumn(label: Text('Absorption')),
+                ],
+                rows: [
+                  DataRow(
+                    cells: [
+                      DataCell(Text(widget.material)),
+                      DataCell(Text(widget.frequency.toStringAsFixed(1))),
+                      DataCell(Text(widget.p1.toStringAsFixed(3))),
+                      DataCell(Text(widget.p2.toStringAsFixed(3))),
+                      DataCell(Text(absorption.toStringAsFixed(3))),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 30),
+              const Text(
+                'Conclusion',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'The absorption coefficient for "${widget.material}" at '
+                '${widget.frequency.toStringAsFixed(1)} Hz is ${absorption.toStringAsFixed(3)}.',
+                style: const TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AmplitudeFrequencyGraph(),
+                    ),
+                  );
+                },
+                child: const Text('View Graph'),
+              ),
+              const SizedBox(height: 40),
+              const Divider(),
+              const Text(
+                'All Stored Measurements',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              _allMeasurements.isEmpty
+                  ? const Text("No stored data.")
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        columnSpacing: 16,
+                        columns: const [
+                          DataColumn(label: Text('Material')),
+                          DataColumn(label: Text('Freq')),
+                          DataColumn(label: Text('P1')),
+                          DataColumn(label: Text('P2')),
+                          DataColumn(label: Text('Absorb')),
+                          DataColumn(label: Text('Created')),
+                        ],
+                        rows: _allMeasurements.map((entry) {
+                          return DataRow(
+                            cells: [
+                              DataCell(Text(entry['material'] ?? '')),
+                              DataCell(Text((entry['frequency'] ?? 0.0)
+                                  .toStringAsFixed(1))),
+                              DataCell(Text(
+                                  (entry['p1'] ?? 0.0).toStringAsFixed(3))),
+                              DataCell(Text(
+                                  (entry['p2'] ?? 0.0).toStringAsFixed(3))),
+                              DataCell(Text((entry['absorption'] ?? 0.0)
+                                  .toStringAsFixed(3))),
+                              DataCell(Text(
+                                  entry['createdAt']?.split('T').first ?? '')),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _clearAll,
+                icon: const Icon(Icons.delete),
+                label: const Text('Clear All Data'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
           ),
         ),
       ),
