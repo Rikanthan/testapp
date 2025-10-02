@@ -40,6 +40,7 @@ dependencies:
   path_provider: ^2.1.5
   fl_chart: ^0.71.0
   sqflite_common_ffi: ^2.3.4+4
+  flutter_blue_plus: ^2.0.0
 
 dev_dependencies:
   flutter_test:
