@@ -25,11 +25,13 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
     setState(() => scanResults.clear());
 
     await FlutterBluePlus.startScan(
-        timeout: const Duration(seconds: 5),
-        withServices: [
-          Guid('0000aaa1-0000-1000-8000-aabbccddeeff'),
-          Guid('0000aaa0-0000-1000-8000-aabbccddeeff')
-        ]);
+      timeout: const Duration(seconds: 5),
+      withServices: [
+        // ✅ Filter to specific services if you know them
+        Guid('0000aaa1-0000-1000-8000-aabbccddeeff'),
+        Guid('0000aaa0-0000-1000-8000-aabbccddeeff'),
+      ],
+    );
 
     FlutterBluePlus.scanResults.listen((results) {
       setState(() {
@@ -49,11 +51,18 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
       print("🔗 Connecting to ${device.remoteId.str} ...");
 
       await device.connect(
-        license: License.free, // ✅ Required in 2.x
+        license: License.free, // ✅ required in flutter_blue_plus 2.x
         timeout: const Duration(seconds: 15),
-        mtu: 512,
         autoConnect: false,
       );
+
+      // ✅ request larger MTU after connection (instead of in connect)
+      try {
+        await device.requestMtu(512);
+        print("📡 MTU set to 512");
+      } catch (e) {
+        print("⚠️ MTU request failed: $e");
+      }
 
       setState(() {
         connectedDevice = device;
@@ -62,22 +71,40 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
       services = await device.discoverServices();
 
       for (var service in services) {
-        print("Service: ${service.uuid}");
+        print("🟦 Service: ${service.uuid}");
         for (var c in service.characteristics) {
-          print("  Characteristic: ${c.uuid}");
-          print("    props: read=${c.properties.read}, "
+          print("   🔹 Characteristic: ${c.uuid}");
+          print("      props: read=${c.properties.read}, "
               "write=${c.properties.write}, "
-              "notify=${c.properties.notify}");
+              "notify=${c.properties.notify}, "
+              "indicate=${c.properties.indicate}");
+          if (c.properties.read) {
+            try {
+              await c.read(timeout: 20);
+              c.lastValueStream.listen((value) {
+                setState(() {
+                  receivedValue = String.fromCharCodes(value);
+                });
+                print("📥 Read from ${c.uuid}: $receivedValue");
+              });
+            } catch (e) {
+              print("❌ Failed to enable read on ${c.uuid}: $e");
+            }
+          }
 
           // Auto-subscribe if notify supported
-          if (c.properties.notify) {
-            await c.setNotifyValue(true);
-            c.lastValueStream.listen((value) {
-              setState(() {
-                receivedValue = String.fromCharCodes(value);
+          if (c.properties.notify || c.properties.indicate) {
+            try {
+              await c.setNotifyValue(true);
+              c.lastValueStream.listen((value) {
+                setState(() {
+                  receivedValue = String.fromCharCodes(value);
+                });
+                print("📥 Notify from ${c.uuid}: $receivedValue");
               });
-              print("📡 Notify from ${c.uuid}: $value");
-            });
+            } catch (e) {
+              print("❌ Failed to enable notify on ${c.uuid}: $e");
+            }
           }
         }
       }
@@ -169,10 +196,10 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
                             if (c.properties.write)
                               IconButton(
                                 icon: const Icon(Icons.upload),
-                                onPressed: () => writeCharacteristic(
-                                    c, "Hello"), // test write
+                                onPressed: () =>
+                                    writeCharacteristic(c, "Hello"),
                               ),
-                            if (c.properties.notify)
+                            if (c.properties.notify || c.properties.indicate)
                               const Icon(Icons.notifications_active,
                                   color: Colors.green),
                           ],
