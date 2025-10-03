@@ -26,7 +26,10 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
 
     await FlutterBluePlus.startScan(
         timeout: const Duration(seconds: 5),
-        withServices: [Guid('0000aaa1-0000-1000-8000-aabbccddeeff')]);
+        withServices: [
+          Guid('0000aaa1-0000-1000-8000-aabbccddeeff'),
+          Guid('0000aaa0-0000-1000-8000-aabbccddeeff')
+        ]);
 
     FlutterBluePlus.scanResults.listen((results) {
       setState(() {
