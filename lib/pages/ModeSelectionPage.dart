@@ -28,6 +28,7 @@ class ModeSelectionPage extends StatelessWidget {
                 icon: Icons.edit,
                 label: 'Manual Input',
                 mode: 'manual',
+                route: '/input',
               ),
               const SizedBox(height: 20),
               buildModeButton(
@@ -35,6 +36,7 @@ class ModeSelectionPage extends StatelessWidget {
                 icon: Icons.bluetooth,
                 label: 'Real-Time via Bluetooth',
                 mode: 'realtime',
+                route: '/blueTooth',
               ),
               const SizedBox(height: 20),
               buildModeButton(
@@ -42,6 +44,7 @@ class ModeSelectionPage extends StatelessWidget {
                 icon: Icons.videogame_asset,
                 label: 'Demo Mode',
                 mode: 'demo',
+                route: '/demo',
               ),
             ],
           ),
@@ -51,7 +54,7 @@ class ModeSelectionPage extends StatelessWidget {
   }
 
   Widget buildModeButton(BuildContext context,
-      {required IconData icon, required String label, required String mode}) {
+      {required IconData icon, required String label, required String mode, required String route}) {
     return ElevatedButton.icon(
       icon: Icon(icon, size: 28),
       label: Text(label, style: TextStyle(fontSize: 20)),
@@ -64,7 +67,7 @@ class ModeSelectionPage extends StatelessWidget {
       ),
       onPressed: () {
         //Navigator.pushNamed(context, '/input', arguments: mode);
-        Navigator.pushNamed(context, '/blueTooth');
+        Navigator.pushNamed(context, route);
       },
     );
   }
