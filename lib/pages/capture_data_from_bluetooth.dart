@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:testapp/pages/db_help.dart';
 
 class BluetoothScreen extends StatefulWidget {
   const BluetoothScreen({super.key});
@@ -19,6 +20,26 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
   void initState() {
     super.initState();
     startScan();
+  }
+
+  Future<void> _getDataFromBlueToothAndSave(double p2) async {
+    String material = "Ble_Material";
+    double frequency = 4000.34;
+    double p1 = 1000;
+
+    double reflectionCoefficient = p2 / p1;
+    double calculatedAbsorption =
+        1 - (reflectionCoefficient * reflectionCoefficient);
+    calculatedAbsorption = calculatedAbsorption.clamp(0.0, 1.0);
+
+    await DBHelper.instance.insertMeasurement({
+      'material': material,
+      'frequency': frequency,
+      'p1': p1,
+      'p2': p2,
+      'absorption': calculatedAbsorption,
+      'createdAt': DateTime.now().toIso8601String(),
+    });
   }
 
   void startScan() async {
@@ -96,10 +117,11 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
           if (c.properties.notify || c.properties.indicate) {
             try {
               await c.setNotifyValue(true);
-              c.lastValueStream.listen((value) {
+              c.lastValueStream.listen((value) async {
                 setState(() {
                   receivedValue = String.fromCharCodes(value);
                 });
+                await _getDataFromBlueToothAndSave(receivedValue as double);
                 print("📥 Notify from ${c.uuid}: $receivedValue");
               });
             } catch (e) {
@@ -120,6 +142,7 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
       setState(() {
         receivedValue = String.fromCharCodes(value);
       });
+      await _getDataFromBlueToothAndSave(receivedValue as double);
       print("🔎 Read from ${characteristic.uuid}: $receivedValue");
     } catch (e) {
       print("❌ Read error: $e");

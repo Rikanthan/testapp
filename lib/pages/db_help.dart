@@ -2,8 +2,6 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'db_help.dart';
 
-
-
 class DBHelper {
   static final DBHelper instance = DBHelper._init();
   static Database? _database;
@@ -56,4 +54,3 @@ class DBHelper {
     await db.delete('measurements');
   }
 }
-
