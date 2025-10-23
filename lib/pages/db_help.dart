@@ -1,55 +1,81 @@
+import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 
 class DBHelper {
+  static final DBHelper instance = DBHelper._init();
   static Database? _database;
-  static final DBHelper instance = DBHelper._internal();
 
-  DBHelper._internal();
+  DBHelper._init();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDatabase();
+    _database = await _initDB('measurements.db');
     return _database!;
   }
 
-  Future<Database> _initDatabase() async {
-    Directory documentsDirectory = await getApplicationDocumentsDirectory();
-    String path = join(documentsDirectory.path, 'impedance_tube.db');
-    return await openDatabase(path, version: 1, onCreate: _onCreate);
+  Future<Database> _initDB(String fileName) async {
+    String path;
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      path = join(Directory.current.path, fileName); // Desktop-safe
+    } else {
+      final dbPath = await getDatabasesPath();
+      path = join(dbPath, fileName);
+    }
+
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: _createDB,
+    );
   }
 
-  Future _onCreate(Database db, int version) async {
+  Future<void> _createDB(Database db, int version) async {
     await db.execute('''
-  CREATE TABLE measurements (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    micSpacing REAL,
-    distanceSample REAL,
-    tubeDiameter REAL,
-    freqMin INTEGER,
-    freqMax INTEGER,
-    samplingRate INTEGER,
-    absorptionCoefficients TEXT,  -- new field
-    createdAt TEXT
-  )
-''');
-
+      CREATE TABLE IF NOT EXISTS measurements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        material TEXT NOT NULL,
+        frequency REAL NOT NULL,
+        p1 REAL NOT NULL,
+        p2 REAL NOT NULL,
+        absorption REAL NOT NULL,
+        createdAt TEXT NOT NULL
+      )
+    ''');
   }
 
   Future<int> insertMeasurement(Map<String, dynamic> data) async {
-    Database db = await instance.database;
-    return await db.insert('measurements', data);
+    try {
+      final db = await instance.database;
+      return await db.insert('measurements', data);
+    } catch (e) {
+      print('Insert failed: $e');
+      return -1;
+    }
   }
 
-  Future<List<Map<String, dynamic>>> getMeasurements() async {
-    Database db = await instance.database;
-    return await db.query('measurements', orderBy: 'createdAt DESC');
+  Future<List<Map<String, dynamic>>> getAllMeasurements() async {
+    try {
+      final db = await instance.database;
+      return await db.query('measurements', orderBy: 'createdAt DESC');
+    } catch (e) {
+      print('Query failed: $e');
+      return [];
+    }
+  }
+
+  Future<void> clearAll() async {
+    try {
+      final db = await instance.database;
+      await db.delete('measurements');
+    } catch (e) {
+      print('Clear failed: $e');
+    }
   }
 
   Future<int> deleteMeasurement(int id) async {
-    Database db = await instance.database;
+    final db = await instance.database;
     return await db.delete('measurements', where: 'id = ?', whereArgs: [id]);
   }
 }
+

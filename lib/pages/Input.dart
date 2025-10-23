@@ -1,10 +1,9 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:testapp/pages/GraphAbsorption.dart';
 import 'package:testapp/pages/TableAbsorption.dart';
+import 'dart:math';
 
 import 'db_help.dart';
+
 
 class InputPage extends StatefulWidget {
   const InputPage();
@@ -14,94 +13,126 @@ class InputPage extends StatefulWidget {
 }
 
 class _InputPageState extends State<InputPage> {
-  final TextEditingController micSpacingController = TextEditingController();
-  final TextEditingController distanceSampleController = TextEditingController();
-  final TextEditingController tubeDiameterController = TextEditingController();
-  final TextEditingController freqMinController = TextEditingController();
-  final TextEditingController freqMaxController = TextEditingController();
-  final TextEditingController samplingRateController = TextEditingController();
+  final TextEditingController materialController = TextEditingController();
+  final TextEditingController frequencyController = TextEditingController();
+  final TextEditingController p1Controller = TextEditingController();
+  final TextEditingController p2Controller = TextEditingController();
+  final TextEditingController x1Controller = TextEditingController();
+
+  late String mode;
+  static const double speedOfSound = 343.0;
 
   @override
-  void dispose() {
-    micSpacingController.dispose();
-    distanceSampleController.dispose();
-    tubeDiameterController.dispose();
-    freqMinController.dispose();
-    freqMaxController.dispose();
-    samplingRateController.dispose();
-    super.dispose();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    mode = ModalRoute.of(context)?.settings.arguments as String? ?? 'manual';
+
+    if (mode == 'demo') {
+      frequencyController.text = '1000';
+      p1Controller.text = '1.2';
+      p2Controller.text = '0.8';
+      x1Controller.text = '0.05';
+    }
+
+    if (mode == 'realtime') {
+      // Stub: Replace with Bluetooth logic later
+      p1Controller.text = '1.5'; // Simulated
+      p2Controller.text = '1.0'; // Simulated
+    }
   }
 
   @override
+  void dispose() {
+    materialController.dispose();
+    frequencyController.dispose();
+    p1Controller.dispose();
+    p2Controller.dispose();
+    x1Controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _clearAll() async {
+    await DBHelper.instance.clearAll();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('All data cleared')),
+    );
+  }
+
+
+  @override
   Widget build(BuildContext context) {
+    bool isEditable = mode == 'manual';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Input Parameters'),
+        title: Text('Input Parameters (${mode.toUpperCase()})'),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            buildTextField('Microphone Spacing (m)', micSpacingController),
-            buildTextField('Distance to Sample (m)', distanceSampleController),
-            buildTextField('Tube Diameter (m)', tubeDiameterController),
-            buildTextField('Minimum Frequency (Hz)', freqMinController),
-            buildTextField('Maximum Frequency (Hz)', freqMaxController),
-            buildTextField('Sampling Rate (Hz)', samplingRateController),
+            buildTextField('Material Name', materialController, isNumber: false, enabled: true),
+            buildTextField('Frequency (Hz)', frequencyController, enabled: isEditable),
+            buildTextField('Mic 1 Pressure (P1)', p1Controller, enabled: isEditable),
+            buildTextField('Mic 2 Pressure (P2)', p2Controller, enabled: isEditable),
+            buildTextField('Distance to Mic 2 (x₁ in meters)', x1Controller, enabled: true),
             const SizedBox(height: 30),
-            ElevatedButton(
+    ElevatedButton(
     onPressed: () async {
-      // double micSpacing = double.parse(micSpacingController.text);
-      // double distanceSample = double.parse(distanceSampleController.text);
-      // double tubeDiameter = double.parse(tubeDiameterController.text);
-      // int freqMin = int.parse(freqMinController.text);
-      // int freqMax = int.parse(freqMaxController.text);
-      // int samplingRate = int.parse(samplingRateController.text);
+    String material = materialController.text;
+    double frequency = double.tryParse(frequencyController.text) ?? 0.0;
+    double p1 = double.tryParse(p1Controller.text) ?? 0.0;
+    double p2 = double.tryParse(p2Controller.text) ?? 0.0;
+    double x1 = double.tryParse(x1Controller.text) ?? 0.0;
 
-      List<double> absorptionList = [];
-      //calculateAbsorptionCoefficient(...);
+    if (material.isEmpty || frequency == 0 || p1 == 0 || p2 == 0 || x1 == 0) {
+    ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Please enter all input values')),
+    );
+    return;
+    }
 
-// Convert List into JSON String
-      String absorptionJson = jsonEncode(absorptionList);
+    const double c = 343.0;
+    double k = (2 * pi * frequency) / c;
+    double reflectionCoefficient = p2 / p1;
+    double absorption = 1 - (reflectionCoefficient * reflectionCoefficient);
+    absorption = absorption.clamp(0.0, 1.0);
 
-// Now save it into database
-      // Map<String, dynamic> data = {
-      //   'micSpacing': micSpacing,
-      //   'distanceSample': distanceSample,
-      //   'tubeDiameter': tubeDiameter,
-      //   'freqMin': freqMin,
-      //   'freqMax': freqMax,
-      //   'samplingRate': samplingRate,
-      //   'absorptionCoefficients': absorptionJson,
-      //   'createdAt': DateTime.now().toIso8601String(),
-      // };
-
-      //await DBHelper.instance.insertMeasurement(data);
-      Navigator.push(context,
-          MaterialPageRoute(builder: (context)=>
-              AbsorptionTableScreen()
-              )
-      );
+    Navigator.push(
+    context,
+    MaterialPageRoute(
+    builder: (context) => AbsorptionTableScreen(
+    material: material,
+    frequency: frequency,
+    p1: p1,
+    p2: p2,
+    x1: x1,
+    k: k,
+    absorption: absorption,
+    mode: mode,
+    ),
+    ),
+    );
     },
-    style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                textStyle: const TextStyle(fontSize: 18),
-              ),
-              child: const Text('Calculate Absorption'),
-            ),
+    child: const Text('Calculate Absorption'),
+    ),
+
+    // Validation and navigation logic here
           ],
         ),
       ),
     );
   }
 
-  Widget buildTextField(String label, TextEditingController controller) {
+  Widget buildTextField(String label, TextEditingController controller,
+      {bool isNumber = true, bool enabled = true}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: TextField(
         controller: controller,
-        keyboardType: TextInputType.number,
+        enabled: enabled,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
@@ -110,4 +141,5 @@ class _InputPageState extends State<InputPage> {
     );
   }
 }
+
 
