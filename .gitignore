@@ -6,6 +6,9 @@
 *.swp
 .buildlog/
 .history
+.firebase
+public/
+.idea
 
 
 
