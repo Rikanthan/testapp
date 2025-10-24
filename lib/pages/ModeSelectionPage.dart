@@ -92,8 +92,7 @@ class _ModeSelectionPageState extends State<ModeSelectionPage> {
           : () async {
               setState(() => _isLoading = true);
               try {
-                final demoData = null;
-                // await pickExcelFileFromPhone();
+                final demoData = await pickExcelFileFromPhone();
 
                 final confirm = await showDialog<bool>(
                   context: context,

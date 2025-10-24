@@ -8,9 +8,9 @@
 .history
 .firebase
 public/
-.idea
 
-
+.firebaserc
+firebase.json
 
 # Flutter repo-specific
 /bin/cache/
