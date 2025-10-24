@@ -1,14 +1,39 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // ✅ Android Gradle Plugin (AGP)
+        classpath "com.android.tools.build:gradle:8.5.2"
+        // ✅ Kotlin plugin compatible with AGP 8.5
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24"
+    }
+}
+
 allprojects {
     repositories {
         google()
         mavenCentral()
     }
+
+    // ✅ Force Java 17–compatible byte-buddy version
+    configurations.all {
+        resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == 'net.bytebuddy' &&
+                details.requested.name == 'byte-buddy') {
+                details.useVersion '1.14.8'
+            }
+        }
+    }
 }
 
 rootProject.buildDir = "../build"
+
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
+
 subprojects {
     project.evaluationDependsOn(":app")
 }

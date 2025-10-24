@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
 import 'package:testapp/pages/GraphAbsorption.dart';
 import 'package:testapp/pages/db_help.dart';
 
-class
-AbsorptionTableScreen extends StatefulWidget {
+class AbsorptionTableScreen extends StatefulWidget {
   final String material;
   final double frequency;
   final double p1;
@@ -57,7 +56,6 @@ class _AbsorptionTableScreenState extends State<AbsorptionTableScreen> {
               onTap: () {
                 Navigator.pop(context);
                 _exportAsCSV();
-
               },
             ),
             ListTile(
@@ -84,7 +82,8 @@ class _AbsorptionTableScreenState extends State<AbsorptionTableScreen> {
 
   Future<void> _exportAsCSV() async {
     final directory = await getApplicationDocumentsDirectory();
-    final filePath = '${directory.path}/absorption_data_${DateTime.now().toIso8601String()}.csv';
+    final filePath =
+        '${directory.path}/absorption_data_${DateTime.now().toIso8601String()}.csv';
     final file = File(filePath);
 
     // Build CSV manually
@@ -93,37 +92,27 @@ class _AbsorptionTableScreenState extends State<AbsorptionTableScreen> {
 
     for (var entry in _allMeasurements) {
       buffer.writeln(
-          '${entry['material']},'
-              '${entry['frequency']},'
-              '${entry['p1']},'
-              '${entry['p2']},'
-              '${entry['absorption']},'
-              '${entry['createdAt']}'
-      );
+          '${entry['material']},${entry['frequency']},${entry['p1']},${entry['p2']},${entry['absorption']},${entry['createdAt']}');
     }
 
     await file.writeAsString(buffer.toString());
-    await _showExportConfirmation(filePath); // ✅ Show dialog with Open Folder
+    await _showExportConfirmation(filePath);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('CSV exported successfully')),
     );
   }
 
-
   Future<void> _exportAsPDF() async {
-    // Placeholder: implement PDF export logic here
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('PDF export coming soon!')),
     );
   }
 
   Future<void> _exportAsImage() async {
-    // Placeholder: implement image export logic here
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Image export coming soon!')),
     );
   }
-
 
   @override
   void initState() {
@@ -164,7 +153,7 @@ class _AbsorptionTableScreenState extends State<AbsorptionTableScreen> {
       _allMeasurements = [];
     });
     ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('All data cleared')),
+      const SnackBar(content: Text('All data cleared')),
     );
   }
 
@@ -179,10 +168,8 @@ class _AbsorptionTableScreenState extends State<AbsorptionTableScreen> {
         actions: [
           TextButton(
             onPressed: () async {
-              final uri = Uri.file(folderPath);
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri);
-              } else {
+              final result = await OpenFile.open(folderPath);
+              if (result.type != ResultType.done) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Could not open folder')),
                 );
@@ -205,185 +192,178 @@ class _AbsorptionTableScreenState extends State<AbsorptionTableScreen> {
     final latest = _allMeasurements.isNotEmpty ? _allMeasurements.first : null;
 
     return Scaffold(
-        appBar: AppBar(
-          title: const Text("Absorption Calculation"),
-          centerTitle: true,
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: SingleChildScrollView(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
+      appBar: AppBar(
+        title: const Text("Absorption Calculation"),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
               Text(
-              'The absorption coefficient for "${widget.material}" at '
-              '${widget.frequency.toStringAsFixed(1)} Hz is ${absorption.
-              toStringAsFixed(3)}.',
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.deepPurple,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 20),
-        if (latest != null)
-    DataTable(
-      columnSpacing: 20,
-      columns: const [
-        DataColumn(label: Text('Material')),
-        DataColumn(label: Text('Frequency (Hz)')),
-        DataColumn(label: Text('P1')),
-        DataColumn(label: Text('P2')),
-        DataColumn(label: Text('Absorption')),
-      ],
-      rows: [
-        DataRow(
-          cells: [
-            DataCell(Text(latest['material'] ?? '')),
-            DataCell(Text((latest['frequency'] ?? 0.0).toStringAsFixed(1))),
-            DataCell(Text((latest['p1'] ?? 0.0).toStringAsFixed(3))),
-            DataCell(Text((latest['p2'] ?? 0.0).toStringAsFixed(3))),
-            DataCell(Text((latest['absorption'] ?? 0.0).toStringAsFixed(3))),
-          ],
-        ),
-      ],
-    )
-    ,
-    const SizedBox(height: 30),
-    //const Text(
-    //'Conclusion',
-    //style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-    //),
-    const SizedBox(height: 10),
-    if (latest != null)
-    Text(
-    'The absorption coefficient for "${latest['material']}" at '
-    '${latest['frequency'].toStringAsFixed(1)} Hz is ${latest['absorption'].toStringAsFixed(3)}.',
-    style: const TextStyle(fontSize: 16),
-    textAlign: TextAlign.center,
-    ),
-    const SizedBox(height: 30),
-    ElevatedButton(
-    onPressed: () {
-    Navigator.push(
-    context,
-    MaterialPageRoute(
-    builder: (context) => const AmplitudeFrequencyGraph(),
-    ),
-    );
-
-    },
-    child: const Text('View Graph'),
-
-    ),
-
-    const SizedBox(height: 40),
-    const Divider(),
-    const Text(
-    'All Stored Measurements',
-    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-    ),
-    const SizedBox(height: 10),
-    _allMeasurements.isEmpty
-    ? const Text("No stored data.")
-        : SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    child: DataTable(
-    columnSpacing: 16,
-    columns: const [
-    DataColumn(label: Text('Material')),
-    DataColumn(label: Text('Freq')),
-    DataColumn(label: Text('P1')),
-    DataColumn(label: Text('P2')),
-    DataColumn(label: Text('Absorb')),
-    DataColumn(label: Text('Created')),
-    ],
-    rows: _allMeasurements.map((entry) {
-    return DataRow(
-    cells: [
-    DataCell(Text(entry['material'] ?? '')),
-    DataCell(Text((entry['frequency'] ?? 0.0).toStringAsFixed(1))),
-    DataCell(Text((entry['p1'] ?? 0.0).toStringAsFixed(3))),
-    DataCell(Text((entry['p2'] ?? 0.0).toStringAsFixed(3))),
-    DataCell(Text((entry['absorption'] ?? 0.0).toStringAsFixed(3))),
-    DataCell(Text(entry['createdAt']?.split('T').first ?? '')),
-    ],
-    );
-    }).toList(),
-    ),
-    ),
-                    Column(
-                      children: [
-                        // Your data table goes here...
-
-                        const SizedBox(height: 24), // Space between table and buttons
-
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (ctx) => AlertDialog(
-                                        title: const Text('Confirm Delete'),
-                                        content: const Text('Are you sure you want to clear all stored data?'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(ctx),
-                                            child: const Text('Cancel'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () async {
-                                              Navigator.pop(ctx);
-                                              await _clearAll(); // Your clear method
-                                            },
-                                            child: const Text('Yes'),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                  icon: const Icon(Icons.delete),
-                                  label: const Text('Clear All Data'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 16), // Space between buttons
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: () => _showExportOptions(context), // Your export dialog
-                                  icon: const Icon(Icons.upload_file),
-                                  label: const Text('Export'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blueAccent, // Or use Theme.of(context).primaryColor
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                  ),
-                                ),
-                              ),
+                'The absorption coefficient for "${widget.material}" at '
+                '${widget.frequency.toStringAsFixed(1)} Hz is ${absorption.toStringAsFixed(3)}.',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              if (latest != null)
+                DataTable(
+                  columnSpacing: 20,
+                  columns: const [
+                    DataColumn(label: Text('Material')),
+                    DataColumn(label: Text('Frequency (Hz)')),
+                    DataColumn(label: Text('P1')),
+                    DataColumn(label: Text('P2')),
+                    DataColumn(label: Text('Absorption')),
+                  ],
+                  rows: [
+                    DataRow(
+                      cells: [
+                        DataCell(Text(latest['material'] ?? '')),
+                        DataCell(Text(
+                            (latest['frequency'] ?? 0.0).toStringAsFixed(1))),
+                        DataCell(
+                            Text((latest['p1'] ?? 0.0).toStringAsFixed(3))),
+                        DataCell(
+                            Text((latest['p2'] ?? 0.0).toStringAsFixed(3))),
+                        DataCell(Text(
+                            (latest['absorption'] ?? 0.0).toStringAsFixed(3))),
+                      ],
+                    ),
+                  ],
+                ),
+              const SizedBox(height: 30),
+              if (latest != null)
+                Text(
+                  'The absorption coefficient for "${latest['material']}" at '
+                  '${latest['frequency'].toStringAsFixed(1)} Hz is ${latest['absorption'].toStringAsFixed(3)}.',
+                  style: const TextStyle(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AmplitudeFrequencyGraph(),
+                    ),
+                  );
+                },
+                child: const Text('View Graph'),
+              ),
+              const SizedBox(height: 40),
+              const Divider(),
+              const Text(
+                'All Stored Measurements',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              _allMeasurements.isEmpty
+                  ? const Text("No stored data.")
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        columnSpacing: 16,
+                        columns: const [
+                          DataColumn(label: Text('Material')),
+                          DataColumn(label: Text('Freq')),
+                          DataColumn(label: Text('P1')),
+                          DataColumn(label: Text('P2')),
+                          DataColumn(label: Text('Absorb')),
+                          DataColumn(label: Text('Created')),
+                        ],
+                        rows: _allMeasurements.map((entry) {
+                          return DataRow(
+                            cells: [
+                              DataCell(Text(entry['material'] ?? '')),
+                              DataCell(Text((entry['frequency'] ?? 0.0)
+                                  .toStringAsFixed(1))),
+                              DataCell(Text(
+                                  (entry['p1'] ?? 0.0).toStringAsFixed(3))),
+                              DataCell(Text(
+                                  (entry['p2'] ?? 0.0).toStringAsFixed(3))),
+                              DataCell(Text((entry['absorption'] ?? 0.0)
+                                  .toStringAsFixed(3))),
+                              DataCell(Text(
+                                  entry['createdAt']?.split('T').first ?? '')),
                             ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+              Column(
+                children: [
+                  const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Confirm Delete'),
+                                  content: const Text(
+                                      'Are you sure you want to clear all stored data?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () async {
+                                        Navigator.pop(ctx);
+                                        await _clearAll();
+                                      },
+                                      child: const Text('Yes'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.delete),
+                            label: const Text('Clear All Data'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
                           ),
                         ),
-
-                        const SizedBox(height: 24), // Bottom spacing
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => _showExportOptions(context),
+                            icon: const Icon(Icons.upload_file),
+                            label: const Text('Export'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueAccent,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                          ),
+                        ),
                       ],
-                    )
-
-
-
-                  ]
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
               )
-    )
-    )
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

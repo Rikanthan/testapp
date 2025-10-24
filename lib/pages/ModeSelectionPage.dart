@@ -59,9 +59,7 @@ class _ModeSelectionPageState extends State<ModeSelectionPage> {
   }
 
   Widget buildModeButton(BuildContext context,
-      {required IconData icon,
-        required String label,
-        required String mode}) {
+      {required IconData icon, required String label, required String mode}) {
     return ElevatedButton.icon(
       icon: Icon(icon, size: 28),
       label: Text(label, style: TextStyle(fontSize: 20)),
@@ -92,44 +90,46 @@ class _ModeSelectionPageState extends State<ModeSelectionPage> {
       onPressed: _isLoading
           ? null
           : () async {
-        setState(() => _isLoading = true);
-        try {
-          final demoData = await pickExcelFileFromPhone();
+              setState(() => _isLoading = true);
+              try {
+                final demoData = null;
+                // await pickExcelFileFromPhone();
 
-          final confirm = await showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text('Proceed to Graph?'),
-              content: Text('Demo data loaded. Do you want to view the graph?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: Text('Yes'),
-                ),
-              ],
-            ),
-          );
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: Text('Proceed to Graph?'),
+                    content: Text(
+                        'Demo data loaded. Do you want to view the graph?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: Text('Yes'),
+                      ),
+                    ],
+                  ),
+                );
 
-          if (confirm == true) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => AbsorptionCurvesPage(demoData: demoData),
-              ),
-            );
-          }
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to load Excel file: $e')),
-          );
-        } finally {
-          setState(() => _isLoading = false);
-        }
-      },
+                if (confirm == true) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AbsorptionCurvesPage(demoData: demoData),
+                    ),
+                  );
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to load Excel file: $e')),
+                );
+              } finally {
+                setState(() => _isLoading = false);
+              }
+            },
     );
   }
 }
