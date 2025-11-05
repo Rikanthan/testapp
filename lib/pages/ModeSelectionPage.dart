@@ -51,7 +51,7 @@ class _ModeSelectionPageState extends State<ModeSelectionPage> {
                 icon: Icons.videogame_asset,
                 label: 'Demo Mode',
                 mode: 'demo',
-                route: '/demo',
+                route: '/input',
               ),
             ],
           ),
@@ -76,7 +76,7 @@ class _ModeSelectionPageState extends State<ModeSelectionPage> {
         elevation: 5,
       ),
       onPressed: () {
-        Navigator.pushNamed(context, '/input', arguments: mode);
+        Navigator.pushNamed(context, route, arguments: mode);
       },
     );
   }
