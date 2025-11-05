@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:testapp/pages/capture_data_from_bluetooth.dart';
 
 // Page imports
 import 'package:testapp/pages/splash_screen.dart';
@@ -43,6 +44,7 @@ class MyApp extends StatelessWidget {
         '/input': (context) => InputPage(),
         '/history': (context) => ViewHistoryPage(),
         '/graph': (context) => AmplitudeFrequencyGraph(),
+        '/blueTooth': (context) => BluetoothScreen(),
       },
     );
   }

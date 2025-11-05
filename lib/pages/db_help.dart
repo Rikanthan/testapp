@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'db_help.dart';
 
 class DBHelper {
   static final DBHelper instance = DBHelper._init();
@@ -14,14 +15,9 @@ class DBHelper {
     return _database!;
   }
 
-  Future<Database> _initDB(String fileName) async {
-    String path;
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      path = join(Directory.current.path, fileName); // Desktop-safe
-    } else {
-      final dbPath = await getDatabasesPath();
-      path = join(dbPath, fileName);
-    }
+  Future<Database> _initDB(String filePath) async {
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, filePath);
 
     return await openDatabase(
       path,
@@ -30,52 +26,32 @@ class DBHelper {
     );
   }
 
-  Future<void> _createDB(Database db, int version) async {
+  Future _createDB(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE IF NOT EXISTS measurements (
+      CREATE TABLE measurements (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        material TEXT NOT NULL,
-        frequency REAL NOT NULL,
-        p1 REAL NOT NULL,
-        p2 REAL NOT NULL,
-        absorption REAL NOT NULL,
-        createdAt TEXT NOT NULL
+        material TEXT,
+        frequency REAL,
+        p1 REAL,
+        p2 REAL,
+        absorption REAL,
+        createdAt TEXT
       )
     ''');
   }
 
   Future<int> insertMeasurement(Map<String, dynamic> data) async {
-    try {
-      final db = await instance.database;
-      return await db.insert('measurements', data);
-    } catch (e) {
-      print('Insert failed: $e');
-      return -1;
-    }
+    final db = await instance.database;
+    return await db.insert('measurements', data);
   }
 
   Future<List<Map<String, dynamic>>> getAllMeasurements() async {
-    try {
-      final db = await instance.database;
-      return await db.query('measurements', orderBy: 'createdAt DESC');
-    } catch (e) {
-      print('Query failed: $e');
-      return [];
-    }
+    final db = await instance.database;
+    return await db.query('measurements');
   }
 
   Future<void> clearAll() async {
-    try {
-      final db = await instance.database;
-      await db.delete('measurements');
-    } catch (e) {
-      print('Clear failed: $e');
-    }
-  }
-
-  Future<int> deleteMeasurement(int id) async {
     final db = await instance.database;
-    return await db.delete('measurements', where: 'id = ?', whereArgs: [id]);
+    await db.delete('measurements');
   }
 }
-

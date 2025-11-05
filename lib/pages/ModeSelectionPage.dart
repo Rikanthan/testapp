@@ -37,20 +37,22 @@ class _ModeSelectionPageState extends State<ModeSelectionPage> {
                 icon: Icons.edit,
                 label: 'Manual Input',
                 mode: 'manual',
+                route: '/input',
               ),
+              const SizedBox(height: 20),
+              buildModeButton(context,
+                  icon: Icons.bluetooth,
+                  label: 'Real-Time via Bluetooth',
+                  mode: 'realtime',
+                  route: '/blueTooth'),
               const SizedBox(height: 20),
               buildModeButton(
                 context,
-                icon: Icons.bluetooth,
-                label: 'Real-Time via Bluetooth',
-                mode: 'realtime',
+                icon: Icons.videogame_asset,
+                label: 'Demo Mode',
+                mode: 'demo',
+                route: '/demo',
               ),
-              const SizedBox(height: 20),
-              buildDemoModeButton(context),
-              if (_isLoading) ...[
-                const SizedBox(height: 20),
-                CircularProgressIndicator(),
-              ],
             ],
           ),
         ),
@@ -59,7 +61,10 @@ class _ModeSelectionPageState extends State<ModeSelectionPage> {
   }
 
   Widget buildModeButton(BuildContext context,
-      {required IconData icon, required String label, required String mode}) {
+      {required IconData icon,
+      required String label,
+      required String mode,
+      required String route}) {
     return ElevatedButton.icon(
       icon: Icon(icon, size: 28),
       label: Text(label, style: TextStyle(fontSize: 20)),

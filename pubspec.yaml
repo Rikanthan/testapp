@@ -35,12 +35,14 @@ dependencies:
   excel: ^4.0.6
   cupertino_icons: ^1.0.8
   sqflite: ^2.4.1
+  
   path: ^1.9.0
   path_provider: ^2.0.14
   fl_chart: ^0.65.0
   sqflite_common_ffi: ^2.3.4+4
   open_file: ^3.5.10
   file_picker: ^10.3.2
+  flutter_blue_plus: ^2.0.0
 
 dev_dependencies:
   flutter_test:

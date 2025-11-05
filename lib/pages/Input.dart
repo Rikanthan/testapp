@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:testapp/pages/TableAbsorption.dart';
 import 'dart:math';
 
+import 'package:testapp/pages/db_help.dart';
 import 'db_help.dart';
 
 
@@ -125,8 +127,36 @@ class _InputPageState extends State<InputPage> {
     );
   }
 
+  // Collect user inputs
+  // double micSpacing = double.parse(micSpacingController.text);
+  // double distanceSample = double.parse(distanceSampleController.text);
+  // double tubeDiameter = double.parse(tubeDiameterController.text);
+  // int freqMin = int.parse(freqMinController.text);
+  // int freqMax = int.parse(freqMaxController.text);
+  // int samplingRate = int.parse(samplingRateController.text);
+
+  // List<double> absorptionList = [];
+  //calculateAbsorptionCoefficient(...);
+
+// Convert List into JSON String
+  //String absorptionJson = jsonEncode(absorptionList);
+
+// Now save it into database
+  // Map<String, dynamic> data = {
+  //   'micSpacing': micSpacing,
+  //   'distanceSample': distanceSample,
+  //   'tubeDiameter': tubeDiameter,
+  //   'freqMin': freqMin,
+  //   'freqMax': freqMax,
+  //   'samplingRate': samplingRate,
+  //   'absorptionCoefficients': absorptionJson,
+  //   'createdAt': DateTime.now().toIso8601String(),
+  // };
+
+  //await DBHelper.instance.insertMeasurement(data);
+
   Widget buildTextField(String label, TextEditingController controller,
-      {bool isNumber = true, bool enabled = true}) {
+      {bool isNumber = true}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: TextField(
@@ -141,5 +171,8 @@ class _InputPageState extends State<InputPage> {
     );
   }
 }
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> a3303ef34e12f102cce4c124db65aa63ae6e93ef
